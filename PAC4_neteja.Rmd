@@ -1,0 +1,122 @@
+---
+title: "PAC4_neteja"
+author: "Edgar Pardo"
+date: "5/16/2020"
+output:
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(dplyr)
+```
+
+*****
+# Introducció
+*****
+
+Aquest algoritme correspon al procés de neteja del conjunt de dades que s'emprarà en el projecte de la matèria *M2.959 - Visualització de dades* del Màster en Data Science de la UOC.
+
+## Procés de neteja
+
+Primer de tot, importarem el fitxer provinent de *peaceagreeements.org*[1] de tots els acords de pau on es tracten temes de reconstrucció socioeconòmica:
+
+```{r}
+dataset <- read.csv('D:\\UOC\\VD\\PAC4\\PAX_dataset.csv',stringsAsFactors = FALSE)
+dim(dataset)[1]
+dim(dataset)[2]
+```
+Comptem amb 933 acords de pau i 265 atributs per cadascun d'ells. El nostre objectiu serà reduir el nombre d'atributs a tots aquells que estan categoritzats com a *Basic information* al *Codebook*[2] i els que seran objecte d'estudi: *Human rights and Equality*.
+
+Primer ens quedarem amb els atributs que representen aquesta informació bàsica:
+
+```{r}
+column_names <- c('ï..Con','Contp','PP','PPName','Reg','AgtId','Agt','Dat','Status','Lgt','N_characters','Agtp','Stage','StageSub','Part','ThrdPart','OthAgr','Loc1ISO','Loc2ISO','Loc1GWNO','Loc2GWNO','UcdpCon','UcdpAgr','PamAgr','CowWar')
+final_dataset <- dataset[,column_names]
+cat('Tenim ',dim(final_dataset)[2], ' atributs')
+```
+Ara tractarem a part els atributs corresponents a drets humans. Recodificarem les variables binàries i categòriques numèriques en cadenes de text, de manera que siguin fàcils d'interpretar i l'usuari no necessiti haver llegit el *Codebook*.
+
+
+```{r}
+length(unique(dataset$AgtId)) #933 DISTINCT VALUES
+column_names_hr <- c('HrGen','EqGen','HrDem','HrFra','HrfSp','HrfBor','HrfTinc','HrfOth','AgtId')
+hr_dataset <- dataset[,column_names_hr]
+```
+
+En aquest subset del dataframe original no només ens hem quedat amb les variables de drets humans a estudiar, sinó que també comptem amb la variable *AgtId* perquè ens servirà posteriorment per fer una join amb el dataset final. Hem comprovat que tots els valor d'aquest últim atribut siguin únics per garantir que en ser unequívocs cada registre del subset anirà a un registre del dataset final.
+
+La codificació serà la següent:
+
+- Variable categòrica binària
+  - Valor 0 passarà a etiquetar-se com a “Not mentioned”
+  - Valor 1 passarà a etiquetar-se com a “Mentioned”
+- Variable categòrica numèrica
+  - Valor 0 passarà a etiquetar-se com a “Not provisioned”
+  - Valor 1 passarà a etiquetar-se com a “Rhetorical provisions”
+  - Valor 2 passarà a etiquetar-se com a “Substantive provisions”
+  - Valor 3 passarà a etiquetar-se com a “Detailed substantive provisions”
+
+```{r}
+hr_dataset <- hr_dataset %>% mutate(HrGen = ifelse(HrGen == "1",'Mentioned','Not mentioned'))
+hr_dataset <- hr_dataset %>% mutate(HrfSp = ifelse(HrfSp == "1",'Mentioned','Not mentioned'))
+hr_dataset <- hr_dataset %>% mutate(HrfBor = ifelse(HrfBor == "1",'Mentioned','Not mentioned'))
+hr_dataset <- hr_dataset %>% mutate(HrfTinc = ifelse(HrfTinc == "1",'Mentioned','Not mentioned'))
+hr_dataset <- hr_dataset %>% mutate(HrfOth = ifelse(HrfOth == "1",'Mentioned','Not mentioned'))
+hr_dataset$EqGen <- factor(hr_dataset$EqGen)
+levels(hr_dataset$EqGen) <- list(
+    'Not provisioned' = c("0"),
+    'Rhetorical provisions' = c("1"),
+    'Substantive provisions' = c("2"),
+    'Detailed substantive provisions' = c("3"))
+
+hr_dataset$HrDem <- factor(hr_dataset$HrDem)
+levels(hr_dataset$HrDem) <- list(
+    'Not provisioned' = c("0"),
+    'Rhetorical provisions' = c("1"),
+    'Substantive provisions' = c("2"),
+    'Detailed substantive provisions' = c("3"))
+
+hr_dataset$HrFra <- factor(hr_dataset$HrFra)
+levels(hr_dataset$HrFra) <- list(
+    'Not provisioned' = c("0"),
+    'Rhetorical provisions' = c("1"),
+    'Substantive provisions' = c("2"),
+    'Detailed substantive provisions' = c("3"))
+
+```
+
+```{r}
+unique(hr_dataset$HrDem) ## Una variable amb 4 categories
+unique(hr_dataset$HrGen) ## Una variable binària
+```
+Un cop transformat és moment de fer la join:
+```{r}
+final_dataset <- merge(final_dataset,hr_dataset )
+dim(final_dataset)[1]
+dim(final_dataset)[2]
+```
+El resultat final ha estat 933 acords de pau amb 33 atributs. Ara és moment de exportar-lo a csv per tractar-lo amb la nostra eina de visualització de dades.
+
+```{r}
+names(final_dataset)[names(final_dataset) == 'ï..Con'] <- 'Con'
+write.csv(final_dataset, file = "PAX_clean.csv", row.names = FALSE)
+```
+
+# Bibliografia
+
+[1] Peaceagreements.org. 2020. PA-X: Peace Agreements Database - Site. [online] Disponible a:
+https://www.peaceagreements.org/ [Accedit 16 maig 2020].
+[2] Peaceagreements.org. 2020. [online] Disponible a: https://www.peaceagreements.org/files/PAX%
+20codebook%20Version3.pdf [Accedit 16 maig 2020].
+
+
+

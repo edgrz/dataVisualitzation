@@ -30,7 +30,7 @@ Aquest algoritme correspon al procés de neteja del conjunt de dades que s'empra
 Primer de tot, importarem el fitxer provinent de *peaceagreeements.org*[1] de tots els acords de pau on es tracten temes de reconstrucció socioeconòmica:
 
 ```{r}
-dataset <- read.csv('D:\\UOC\\VD\\PAC4\\PAX_dataset.csv',stringsAsFactors = FALSE)
+dataset <- read.csv('./input/PAX_dataset.csv',stringsAsFactors = FALSE)
 dim(dataset)[1]
 dim(dataset)[2]
 ```

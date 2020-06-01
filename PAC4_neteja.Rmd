@@ -108,7 +108,7 @@ El resultat final ha estat 933 acords de pau amb 33 atributs. Ara és moment de 
 
 ```{r}
 names(final_dataset)[names(final_dataset) == 'ï..Con'] <- 'Con'
-write.csv(final_dataset, file = "PAX_clean.csv", row.names = FALSE)
+write.csv(final_dataset, file = "./output/PAX_clean.csv", row.names = FALSE)
 ```
 
 # Bibliografia
